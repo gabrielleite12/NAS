@@ -1,0 +1,12 @@
+{
+  "nas_host": "192.168.0.250",
+  "api_port": 8765,
+  "ftp_port": 21,
+  "ftp_user": "admin",
+  "ftp_password": "",
+  "ftp_mode": "passive",
+  "ftp_root": "/usb1_1_2",
+  "smb_share": "samba",
+  "smb_user": "samba",
+  "smb_password": "091846"
+}

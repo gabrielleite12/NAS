@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAS Local</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-color: #f1f5f9;
+            --sidebar-bg: #ffffff;
+            --text-color: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --primary-color: #2563eb;
+            --hover-bg: #f8fafc;
+            --selected-bg: #eff6ff;
+            --danger-color: #ef4444;
+            --success-color: #10b981;
+            --font-family: 'Inter', sans-serif;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 24px 0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-sm);
+            z-index: 10;
+            transition: transform 0.3s ease;
+        }
+
+        .brand {
+            font-size: 1.4rem;
+            font-weight: 700;
+            padding: 0 24px 30px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--primary-color);
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--success-color);
+            box-shadow: 0 0 8px var(--success-color);
+        }
+        .status-dot.offline {
+            background-color: var(--danger-color);
+            box-shadow: 0 0 8px var(--danger-color);
+        }
+
+        .menu-item {
+            padding: 12px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .menu-item:hover {
+            background-color: var(--hover-bg);
+            color: var(--text-color);
+        }
+
+        .menu-item.active {
+            background-color: var(--selected-bg);
+            color: var(--primary-color);
+            border-right: 4px solid var(--primary-color);
+        }
+
+        /* Mobile Header */
+        .mobile-header {
+            display: none;
+            padding: 15px 20px;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .hamburger {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        /* Main Wrapper */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Views */
+        .view {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            background-color: var(--sidebar-bg);
+            border-radius: 12px;
+            margin: 20px;
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            position: relative;
+        }
+        .view.active {
+            display: flex;
+        }
+
+        /* Topbar */
+        .topbar {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: white;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .path-breadcrumb {
+            font-size: 1.1rem;
+            color: var(--text-color);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            font-weight: 500;
+            overflow-x: auto;
+            white-space: nowrap;
+            max-width: 100%;
+        }
+
+        .breadcrumb-item {
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+        .breadcrumb-item:hover {
+            color: var(--primary-color);
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-color);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--shadow-sm);
+            font-family: var(--font-family);
+        }
+
+        .btn:hover {
+            background-color: var(--hover-bg);
+            border-color: #cbd5e1;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+        }
+
+        .btn-danger:hover {
+            background-color: #b91c1c;
+        }
+
+        .search-bar {
+            padding: 10px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            outline: none;
+            width: 200px;
+            transition: border-color 0.2s;
+            font-family: var(--font-family);
+        }
+        .search-bar:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* Toggle */
+        .filter-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .filter-toggle input {
+            cursor: pointer;
+        }
+
+        /* File List */
+        .file-list-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background-color: #f8fafc;
+        }
+
+        .file-list-header div {
+            cursor: pointer;
+        }
+
+        .file-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .file-item:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .file-item.selected {
+            background-color: var(--selected-bg);
+        }
+
+        .file-name {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 500;
+            word-break: break-all;
+        }
+        
+        .file-owner {
+            font-size: 0.85rem;
+            color: var(--primary-color);
+            background: var(--selected-bg);
+            padding: 2px 8px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .icon {
+            font-size: 1.4rem;
+        }
+
+        /* Logs View */
+        .logs-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .log-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .log-time {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            min-width: 150px;
+        }
+        
+        .log-action {
+            font-weight: 600;
+            color: var(--primary-color);
+            min-width: 120px;
+        }
+        
+        .log-user {
+            font-weight: bold;
+            color: #475569;
+            min-width: 80px;
+        }
+
+        .log-desc {
+            color: var(--text-color);
+            word-break: break-all;
+        }
+
+        /* Config View */
+        .config-area {
+            padding: 24px;
+            overflow-y: auto;
+        }
+        
+        .config-card {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 600px;
+        }
+
+        /* Modals & Context Menu */
+        .modal, .login-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            z-index: 500;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 450px;
+            max-width: 90%;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-title {
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-family: var(--font-family);
+            font-size: 1rem;
+        }
+        
+        .modal-select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-family: var(--font-family);
+            font-size: 1rem;
+            background: white;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .context-menu {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            border-radius: 8px;
+            padding: 8px 0;
+            z-index: 150;
+            min-width: 180px;
+        }
+
+        .context-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-color);
+            transition: background 0.2s;
+        }
+
+        .context-item:hover {
+            background-color: var(--hover-bg);
+            color: var(--primary-color);
+        }
+
+        .context-item.text-danger {
+            color: var(--danger-color);
+        }
+
+        /* Toasts */
+        .toast-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: #1e293b;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Upload progress (não bloqueia navegação) */
+        .upload-panel {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            width: min(360px, calc(100vw - 48px));
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            overflow: hidden;
+            display: none;
+            pointer-events: auto;
+        }
+        .upload-panel.visible { display: block; }
+        .upload-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border-color);
+            gap: 10px;
+        }
+        .upload-panel-title {
+            font-weight: 600;
+            font-size: 0.92rem;
+            color: var(--text-color);
+        }
+        .upload-panel-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .upload-panel-actions button {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+        .upload-panel-actions button:hover {
+            background: var(--hover-bg);
+            color: var(--text-color);
+        }
+        .upload-panel-body {
+            padding: 14px;
+        }
+        .upload-panel.collapsed .upload-panel-body {
+            display: none;
+        }
+        .upload-file-name {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 10px;
+        }
+        .upload-bar-track {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .upload-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--primary-color);
+            border-radius: 999px;
+            transition: width 0.2s ease;
+        }
+        .upload-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+        }
+
+        .hidden { display: none !important; }
+
+        /* Drag and Drop Overlay */
+        .drag-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(37, 99, 235, 0.08);
+            border: 3px dashed var(--primary-color);
+            border-radius: 12px;
+            z-index: 100;
+            pointer-events: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .drag-overlay.active {
+            display: flex;
+        }
+        .drag-overlay-content {
+            text-align: center;
+            color: var(--primary-color);
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        .drag-overlay-content .drag-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        /* Media Queries para Mobile */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                position: fixed;
+                left: -260px;
+                top: 0;
+                bottom: 0;
+                background: white;
+                box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            }
+            .sidebar.open {
+                left: 0;
+            }
+            .mobile-header {
+                display: flex;
+            }
+            .view {
+                margin: 10px;
+                border-radius: 8px;
+            }
+            .file-list-header {
+                grid-template-columns: 3fr 1fr;
+            }
+            .file-list-header div:nth-child(3),
+            .file-list-header div:nth-child(4) {
+                display: none;
+            }
+            .file-item {
+                grid-template-columns: 3fr 1fr;
+            }
+            .file-item div:nth-child(3),
+            .file-item div:nth-child(4) {
+                display: none;
+            }
+            .log-item {
+                flex-direction: column;
+                gap: 5px;
+            }
+            .actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .search-bar {
+                width: 100%;
+            }
+            #disk-space {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+            .path-breadcrumb {
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Login Modal -->
+    <div class="login-modal" id="login-modal">
+        <div class="modal-content">
+            <div class="modal-title">Entrar no NAS</div>
+            
+            <label style="font-size:0.9rem; font-weight:500; color:var(--text-secondary);">Usuário</label>
+            <select class="modal-select" id="login-user">
+                <option value="leite">Leite</option>
+                <option value="celio">Celio</option>
+            </select>
+            
+            <div id="password-container">
+                <label style="font-size:0.9rem; font-weight:500; color:var(--text-secondary);">Senha</label>
+                <input type="password" class="modal-input" id="login-pass" placeholder="Sua senha">
+            </div>
+
+            <button class="btn btn-primary" style="width:100%; justify-content:center; margin-top:10px;" onclick="doLogin()">Entrar</button>
+        </div>
+    </div>
+
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+        <div class="hamburger" onclick="toggleSidebar()">☰</div>
+        <div style="font-weight:bold; color:var(--primary-color);">NAS Local</div>
+        <div id="mobile-status-indicator" class="status-dot"></div>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="brand">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            NAS Local 
+            <div id="status-indicator" class="status-dot"></div>
+        </div>
+        <div class="menu-item active" onclick="switchView('files', this)">
+            <span>📁</span> Meus Arquivos
+        </div>
+        <div class="menu-item" onclick="switchView('logs', this)">
+            <span>📋</span> Registro de Atividades
+        </div>
+        <div class="menu-item" onclick="switchView('config', this)">
+            <span>⚙️</span> Configurações
+        </div>
+        <div style="flex:1;"></div>
+        <div class="menu-item" onclick="shutdownServer()" style="color:var(--danger-color); font-weight: bold; background: #fee2e2;">
+            <span>🛑</span> Desligar Servidor
+        </div>
+        <div class="menu-item" onclick="logout()">
+            <span>🚪</span> Sair (<span id="current-user-display"></span>)
+        </div>
+    </div>
+
+    <div class="main-wrapper">
+        <!-- View: Files -->
+        <div class="view active" id="view-files">
+            <div class="topbar">
+                <div class="path-breadcrumb" id="breadcrumb">
+                    <span class="breadcrumb-item" onclick="loadPath('/')">/</span>
+                </div>
+                
+                <div class="actions">
+                    <div id="disk-space" style="display:flex; flex-direction:column; justify-content:center; font-size:0.8rem; margin-right:10px; color:var(--text-secondary);">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                            <span>Livre: <span id="disk-free-text" style="font-weight:600; color:var(--text-color);">--</span></span>
+                        </div>
+                        <div style="width:140px; height:6px; background:#e2e8f0; border-radius:3px; overflow:hidden; position:relative;">
+                            <div id="disk-bar" style="position:absolute; left:0; top:0; height:100%; width:0%; background:var(--primary-color); transition: width 0.5s;"></div>
+                        </div>
+                    </div>
+                    <input type="text" class="search-bar" id="search-input" placeholder="Pesquisar arquivo...">
+                    
+                    <label class="filter-toggle">
+                        <input type="checkbox" id="filter-my-files" onchange="applyFilter()"> Apenas Meus Arquivos
+                    </label>
+
+                    <button class="btn" onclick="openNewFolderModal()">+ Pasta</button>
+                    <button class="btn btn-primary" onclick="document.getElementById('file-upload').click()">↑ Arquivos</button>
+                    <button class="btn" onclick="document.getElementById('folder-upload').click()">📁 Upload Pasta</button>
+                    <input type="file" id="file-upload" multiple class="hidden" onchange="handleFileUpload(event)">
+                    <input type="file" id="folder-upload" webkitdirectory directory multiple class="hidden" onchange="handleFolderUpload(event)">
+                </div>
+            </div>
+
+            <div class="file-list-header">
+                <div onclick="sortFiles('name')">Nome ↕</div>
+                <div onclick="sortFiles('size')">Tamanho ↕</div>
+                <div onclick="sortFiles('date')">Data ↕</div>
+                <div onclick="sortFiles('owner')">Criado por ↕</div>
+            </div>
+
+            <div class="file-list" id="file-list">
+                <!-- Files injected here -->
+            </div>
+
+            <!-- Drag and drop overlay -->
+            <div class="drag-overlay" id="drag-overlay">
+                <div class="drag-overlay-content">
+                    <div class="drag-icon">📥</div>
+                    Solte os arquivos aqui para enviar
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Logs -->
+        <div class="view" id="view-logs">
+            <div class="topbar">
+                <h2 style="font-size: 1.3rem; font-weight: 600;">Registro de Atividades</h2>
+                <button class="btn" onclick="loadLogs()">↻ Atualizar</button>
+            </div>
+            <div class="logs-list" id="logs-list">
+                <!-- Logs injected here -->
+            </div>
+        </div>
+
+        <!-- View: Config -->
+        <div class="view" id="view-config">
+            <div class="topbar">
+                <h2 style="font-size: 1.3rem; font-weight: 600;">Configurações do NAS</h2>
+            </div>
+            <div class="config-area">
+                <div class="config-card">
+                    <h3 style="color:var(--danger-color); margin-bottom:10px;">Área de Risco</h3>
+                    <p style="color:var(--text-secondary); margin-bottom:20px; font-size:0.9rem;">
+                        Atenção: A ação abaixo irá apagar <strong>todas</strong> as pastas e arquivos do disco conectado ao roteador. O processo não pode ser desfeito.
+                    </p>
+                    <button class="btn btn-danger" onclick="formatDisk()">🗑️ Esvaziar HD (Formatação Lógica)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu (right-click on a file/folder) -->
+    <div class="context-menu" id="context-menu">
+        <div class="context-item" id="ctx-open">📂 Abrir</div>
+        <div class="context-item" id="ctx-download">⬇️ Baixar</div>
+        <div class="context-item" id="ctx-rename">✏️ Renomear</div>
+        <div class="context-item text-danger" id="ctx-delete">🗑️ Excluir</div>
+    </div>
+
+    <!-- Context Menu (right-click on empty area) -->
+    <div class="context-menu" id="bg-context-menu">
+        <div class="context-item" onclick="openNewFolderModal(); closeBgContextMenu();">📁 Nova Pasta</div>
+        <div class="context-item" onclick="openNewFileModal(); closeBgContextMenu();">📄 Novo Arquivo</div>
+        <div class="context-item" onclick="document.getElementById('file-upload').click(); closeBgContextMenu();">↑ Upload de Arquivo</div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="input-modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modal-title">Título</div>
+            <input type="text" class="modal-input" id="modal-input" autocomplete="off">
+            <div class="modal-actions">
+                <button class="btn" onclick="closeModal()">Cancelar</button>
+                <button class="btn btn-primary" id="modal-confirm">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Painel de upload em segundo plano (não bloqueia navegação) -->
+    <div class="upload-panel" id="upload-panel">
+        <div class="upload-panel-header">
+            <div class="upload-panel-title" id="upload-panel-title">Enviando...</div>
+            <div class="upload-panel-actions">
+                <button type="button" onclick="toggleUploadPanel()" title="Minimizar/Expandir">▾</button>
+                <button type="button" id="upload-panel-close" onclick="hideUploadPanel()" title="Fechar" style="display:none;">✕</button>
+            </div>
+        </div>
+        <div class="upload-panel-body">
+            <div class="upload-file-name" id="upload-file-name">Preparando...</div>
+            <div class="upload-bar-track">
+                <div class="upload-bar-fill" id="upload-bar-fill"></div>
+            </div>
+            <div class="upload-meta">
+                <span id="upload-count-text">0 / 0</span>
+                <span id="upload-percent-text">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin + '/api';
+        
+        let activeUser = localStorage.getItem('nas_user') || '';
+        let activePass = localStorage.getItem('nas_pass') || '';
+        
+        let currentPath = '/';
+        let filesData = [];
+        let currentSort = { field: 'type', asc: true };
+        
+        const isLocalhost = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (isLocalhost) {
+                document.getElementById('password-container').style.display = 'none';
+            }
+            checkLogin();
+        });
+
+        async function checkLogin() {
+            if (!activeUser || (!isLocalhost && !activePass)) {
+                showLogin();
+                return;
+            }
+            
+            try {
+                await api('/login'); // check if auth is valid
+                document.getElementById('login-modal').style.display = 'none';
+                document.getElementById('current-user-display').innerText = activeUser;
+                initApp();
+            } catch (e) {
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('login-modal').style.display = 'flex';
+        }
+
+        async function doLogin() {
+            const u = document.getElementById('login-user').value;
+            const p = document.getElementById('login-pass').value;
+            
+            activeUser = u;
+            activePass = p;
+            localStorage.setItem('nas_user', u);
+            localStorage.setItem('nas_pass', p);
+            
+            checkLogin();
+        }
+
+        function logout() {
+            activeUser = '';
+            activePass = '';
+            localStorage.removeItem('nas_user');
+            localStorage.removeItem('nas_pass');
+            window.location.reload();
+        }
+
+        async function shutdownServer() {
+            if (confirm("Tem certeza que deseja desligar o servidor NAS Local? Você precisará reabrir o executável para ligá-lo novamente.")) {
+                try {
+                    await api('/shutdown', 'POST');
+                    document.body.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100vh; font-family:var(--font-family); font-size:1.5rem; color:var(--danger-color);">Servidor Desligado com Sucesso! Pode fechar esta janela.</div>';
+                } catch(e) {
+                    showToast('Erro ao desligar: ' + e.message, true);
+                }
+            }
+        }
+
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            if (sb.classList.contains('open')) sb.classList.remove('open');
+            else sb.classList.add('open');
+        }
+
+        function initApp() {
+            checkStatus();
+            fetchDiskSpace();
+            loadPath('/');
+            setInterval(checkStatus, 10000);
+            setInterval(fetchDiskSpace, 60000);
+        }
+
+        function switchView(viewName, el) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            
+            document.getElementById('view-' + viewName).classList.add('active');
+            el.classList.add('active');
+
+            if (viewName === 'logs') {
+                loadLogs();
+            }
+            
+            // hide sidebar on mobile after click
+            document.getElementById('sidebar').classList.remove('open');
+        }
+
+        function applyFilter() {
+            renderFiles(filesData);
+        }
+
+        document.getElementById('search-input').addEventListener('input', () => {
+            renderFiles(filesData);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.context-menu') === null) {
+                document.getElementById('context-menu').style.display = 'none';
+                document.getElementById('bg-context-menu').style.display = 'none';
+            }
+        });
+
+        async function api(endpoint, method = 'GET', body = null) {
+            const url = `${API_BASE}${endpoint}`;
+            const options = { 
+                method, 
+                headers: {
+                    'X-User': activeUser,
+                    'X-Pass': activePass
+                } 
+            };
+            if (body) {
+                options.headers['Content-Type'] = 'application/json';
+                options.body = JSON.stringify(body);
+            }
+            const res = await fetch(url, options);
+            const data = await res.json().catch(() => null);
+            if (!res.ok) throw new Error(data?.error || `Erro HTTP ${res.status}`);
+            return data;
+        }
+
+        async function checkStatus() {
+            try {
+                const data = await api('/status');
+                const ind1 = document.getElementById('status-indicator');
+                const ind2 = document.getElementById('mobile-status-indicator');
+                if (data.status === 'online') {
+                    ind1.classList.remove('offline');
+                    ind2.classList.remove('offline');
+                } else {
+                    ind1.classList.add('offline');
+                    ind2.classList.add('offline');
+                }
+            } catch (e) {}
+        }
+
+        async function fetchDiskSpace() {
+            try {
+                const data = await api('/diskspace');
+                if (!data) return;
+                
+                document.getElementById('disk-free-text').innerText = formatSize(data.free);
+                
+                let percent = 0;
+                if (data.total > 0) percent = (data.used / data.total) * 100;
+                
+                const bar = document.getElementById('disk-bar');
+                bar.style.width = percent + '%';
+                if (percent > 90) bar.style.background = 'var(--danger-color)';
+                else bar.style.background = 'var(--primary-color)';
+            } catch (e) {}
+        }
+
+        async function formatDisk() {
+            const c1 = confirm("AVISO: Você está prestes a apagar TODOS os dados do seu HD conectados ao NAS.\nTem certeza absoluta?");
+            if (!c1) return;
+            const c2 = confirm("Pressione OK para confirmar e iniciar a Formatação Lógica. O processo pode demorar.");
+            if (!c2) return;
+
+            showToast("Iniciando formatação, por favor aguarde...");
+            try {
+                await api('/format', 'POST', {});
+                showToast("Disco formatado com sucesso!");
+                loadPath('/');
+                fetchDiskSpace();
+            } catch (e) {
+                showToast("Erro ao formatar: " + e.message, true);
+            }
+        }
+
+        async function loadPath(path) {
+            try {
+                currentPath = path;
+                updateBreadcrumb();
+                const data = await api(`/files?path=${encodeURIComponent(path)}`);
+                filesData = data || [];
+                sortData();
+                renderFiles(filesData);
+            } catch (e) {
+                showToast(e.message, true);
+            }
+        }
+
+        async function loadLogs() {
+            try {
+                const logs = await api('/logs');
+                const list = document.getElementById('logs-list');
+                list.innerHTML = '';
+                if (!logs || logs.length === 0) {
+                    list.innerHTML = '<p style="color: var(--text-secondary);">Nenhuma atividade registrada ainda.</p>';
+                    return;
+                }
+                logs.forEach(log => {
+                    const div = document.createElement('div');
+                    div.className = 'log-item';
+                    const date = new Date(log.time).toLocaleString('pt-BR');
+                    div.innerHTML = `
+                        <div class="log-time">${date}</div>
+                        <div class="log-user">${log.user.toUpperCase()}</div>
+                        <div class="log-action">${log.action}</div>
+                        <div class="log-desc">${log.item}</div>
+                    `;
+                    list.appendChild(div);
+                });
+            } catch (e) {}
+        }
+
+        function updateBreadcrumb() {
+            const parts = currentPath.split('/').filter(p => p);
+            let html = `<span class="breadcrumb-item" onclick="loadPath('/')">Início</span>`;
+            let buildPath = '/';
+            parts.forEach(p => {
+                buildPath += p + '/';
+                html += ` <span style="color:var(--text-secondary)">/</span> <span class="breadcrumb-item" onclick="loadPath('${buildPath}')">${p}</span>`;
+            });
+            document.getElementById('breadcrumb').innerHTML = html;
+        }
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 B';
+            if (!bytes) return '-';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return d.toLocaleString('pt-BR');
+        }
+
+        function getIcon(type, name) {
+            if (type === 'dir') return '📁';
+            const ext = name.split('.').pop().toLowerCase();
+            const images = ['jpg','jpeg','png','gif','webp','svg'];
+            const video = ['mp4','mkv','avi','mov'];
+            if (images.includes(ext)) return '🖼️';
+            if (video.includes(ext)) return '🎬';
+            if (ext === 'pdf') return '📕';
+            return '📄';
+        }
+
+        function renderFiles(files) {
+            const listEl = document.getElementById('file-list');
+            listEl.innerHTML = '';
+            
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const onlyMine = document.getElementById('filter-my-files').checked;
+
+            if (currentPath !== '/') {
+                const parentPath = currentPath.split('/').slice(0, -2).join('/') + '/';
+                const upItem = document.createElement('div');
+                upItem.className = 'file-item';
+                upItem.innerHTML = `<div class="file-name"><span class="icon" style="filter: grayscale(1);">📁</span> Voltar</div><div></div><div></div><div></div>`;
+                upItem.onclick = () => loadPath(parentPath || '/');
+                listEl.appendChild(upItem);
+            }
+
+            files.forEach(f => {
+                if (query && !f.name.toLowerCase().includes(query)) return;
+                if (onlyMine && f.owner && f.owner !== activeUser && f.type !== 'dir') return; // Apply owner filter only to files for now
+
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                
+                let ownerBadge = f.owner ? `<span class="file-owner">${f.owner}</span>` : `<span style="color:#cbd5e1">-</span>`;
+
+                item.innerHTML = `
+                    <div class="file-name"><span class="icon">${getIcon(f.type, f.name)}</span> ${f.name}</div>
+                    <div>${f.type === 'dir' ? '-' : formatSize(f.size)}</div>
+                    <div>${formatDate(f.time)}</div>
+                    <div>${ownerBadge}</div>
+                `;
+
+                item.onclick = () => {
+                    document.querySelectorAll('.file-item').forEach(el => el.classList.remove('selected'));
+                    item.classList.add('selected');
+                };
+
+                item.ondblclick = () => handleOpen(f.name, f.type);
+                item.oncontextmenu = (e) => showContextMenu(e, f);
+
+                listEl.appendChild(item);
+            });
+        }
+
+        function sortFiles(field) {
+            if (currentSort.field === field) {
+                currentSort.asc = !currentSort.asc;
+            } else {
+                currentSort.field = field;
+                currentSort.asc = true;
+            }
+            sortData();
+            renderFiles(filesData);
+        }
+
+        function sortData() {
+            filesData.sort((a, b) => {
+                if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
+
+                let valA = a[currentSort.field];
+                let valB = b[currentSort.field];
+                if (currentSort.field === 'date') {
+                    valA = new Date(a.time).getTime();
+                    valB = new Date(b.time).getTime();
+                } else if (currentSort.field === 'name') {
+                    valA = valA.toLowerCase();
+                    valB = valB.toLowerCase();
+                } else if (currentSort.field === 'owner') {
+                    valA = (valA || '').toLowerCase();
+                    valB = (valB || '').toLowerCase();
+                }
+
+                if (valA < valB) return currentSort.asc ? -1 : 1;
+                if (valA > valB) return currentSort.asc ? 1 : -1;
+                return 0;
+            });
+        }
+
+        function showContextMenu(e, f) {
+            e.preventDefault();
+            const ctxMenu = document.getElementById('context-menu');
+            window.currentContextMenuName = f.name;
+            window.currentContextMenuPath = (currentPath.endsWith('/') ? currentPath : currentPath + '/') + f.name;
+            window.currentContextMenuType = f.type;
+
+            ctxMenu.style.display = 'block';
+            ctxMenu.style.left = `${e.pageX}px`;
+            ctxMenu.style.top = `${e.pageY}px`;
+
+            document.getElementById('ctx-open').onclick = () => handleOpen(f.name, f.type);
+            document.getElementById('ctx-download').onclick = () => handleDownload(window.currentContextMenuPath, f.name);
+            document.getElementById('ctx-rename').onclick = () => openRenameModal();
+            document.getElementById('ctx-delete').onclick = () => handleDelete();
+            
+            document.getElementById('ctx-download').style.display = f.type === 'dir' ? 'none' : 'block';
+        }
+
+        function handleOpen(name, type) {
+            if (type === 'dir') {
+                loadPath((currentPath.endsWith('/') ? currentPath : currentPath + '/') + name + '/');
+            } else {
+                handleDownload((currentPath.endsWith('/') ? currentPath : currentPath + '/') + name, name);
+            }
+        }
+
+        function handleDownload(filePath, name) {
+            window.location.href = `${API_BASE}/download?path=${encodeURIComponent(filePath)}`;
+            showToast(`Baixando ${name}...`);
+        }
+
+        // --- Upload em segundo plano (não bloqueia navegação) ---
+        const uploadState = {
+            running: false,
+            total: 0,
+            done: 0,
+            errors: 0,
+            basePath: '/',
+            queue: []
+        };
+
+        function ensureTrailingSlash(p) {
+            if (!p || p === '/') return '/';
+            return p.endsWith('/') ? p : p + '/';
+        }
+
+        function joinVirtualPath(base, rel) {
+            const b = ensureTrailingSlash(base);
+            const r = (rel || '').replace(/^\/+/, '');
+            if (!r) return b;
+            return b + r;
+        }
+
+        function showUploadPanel() {
+            const panel = document.getElementById('upload-panel');
+            panel.classList.add('visible');
+            panel.classList.remove('collapsed');
+            document.getElementById('upload-panel-close').style.display = 'none';
+        }
+
+        function hideUploadPanel() {
+            if (uploadState.running) return;
+            document.getElementById('upload-panel').classList.remove('visible');
+        }
+
+        function toggleUploadPanel() {
+            document.getElementById('upload-panel').classList.toggle('collapsed');
+        }
+
+        function updateUploadPanel(label, fileProgress = 0) {
+            const overall = uploadState.total === 0
+                ? 0
+                : ((uploadState.done + fileProgress) / uploadState.total) * 100;
+            document.getElementById('upload-file-name').textContent = label || 'Enviando...';
+            document.getElementById('upload-bar-fill').style.width = Math.min(100, overall) + '%';
+            document.getElementById('upload-count-text').textContent =
+                `${uploadState.done} / ${uploadState.total}`;
+            document.getElementById('upload-percent-text').textContent =
+                Math.round(Math.min(100, overall)) + '%';
+            document.getElementById('upload-panel-title').textContent = uploadState.running
+                ? 'Enviando em segundo plano...'
+                : (uploadState.errors ? 'Upload concluído com erros' : 'Upload concluído');
+        }
+
+        function uploadSingleFile(file, destPath, displayName) {
+            return new Promise((resolve) => {
+                const formData = new FormData();
+                formData.append('file', file, file.name);
+                formData.append('path', destPath);
+
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', `${API_BASE}/upload`);
+                xhr.setRequestHeader('X-User', activeUser);
+                xhr.setRequestHeader('X-Pass', activePass);
+
+                xhr.upload.onprogress = (ev) => {
+                    if (!ev.lengthComputable) return;
+                    updateUploadPanel(displayName, ev.loaded / ev.total);
+                };
+
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve(true);
+                    } else {
+                        resolve(false);
+                    }
+                };
+                xhr.onerror = () => resolve(false);
+                xhr.send(formData);
+            });
+        }
+
+        async function ensureDirs(basePath, relativeDirs) {
+            const dirs = Array.from(relativeDirs).sort((a, b) => a.split('/').length - b.split('/').length || a.length - b.length);
+            for (const dir of dirs) {
+                const parts = dir.split('/').filter(Boolean);
+                if (parts.length === 0) continue;
+                const name = parts[parts.length - 1];
+                const parentRel = parts.slice(0, -1).join('/');
+                const parentPath = joinVirtualPath(basePath, parentRel ? parentRel + '/' : '');
+                try {
+                    await api('/folder', 'POST', { path: parentPath, name });
+                } catch (e) {
+                    // Pasta já pode existir
+                }
+            }
+        }
+
+        async function runUploadQueue() {
+            if (uploadState.running) return;
+            uploadState.running = true;
+            showUploadPanel();
+
+            while (uploadState.queue.length > 0) {
+                const job = uploadState.queue.shift();
+                updateUploadPanel(job.label, 0);
+                const ok = await uploadSingleFile(job.file, job.destPath, job.label);
+                uploadState.done++;
+                if (!ok) {
+                    uploadState.errors++;
+                    showToast(`Erro ao enviar ${job.label}`, true);
+                }
+                updateUploadPanel(job.label, 1);
+            }
+
+            uploadState.running = false;
+            document.getElementById('upload-panel-close').style.display = 'inline-block';
+            updateUploadPanel(
+                uploadState.errors
+                    ? `Concluído com ${uploadState.errors} erro(s)`
+                    : 'Todos os arquivos enviados'
+            );
+
+            if (uploadState.errors === 0) {
+                showToast('Upload concluído!');
+            } else {
+                showToast(`Upload finalizado com ${uploadState.errors} erro(s)`, true);
+            }
+
+            // Atualiza a pasta atual sem interromper a navegação do usuário
+            loadPath(currentPath);
+            fetchDiskSpace();
+        }
+
+        function enqueueUploads(items, basePath) {
+            const destBase = ensureTrailingSlash(basePath);
+            if (!uploadState.running && uploadState.queue.length === 0) {
+                uploadState.total = 0;
+                uploadState.done = 0;
+                uploadState.errors = 0;
+            }
+            uploadState.basePath = destBase;
+
+            for (const item of items) {
+                uploadState.queue.push({
+                    file: item.file,
+                    destPath: item.destPath,
+                    label: item.label
+                });
+                uploadState.total++;
+            }
+
+            updateUploadPanel(items[0]?.label || 'Preparando...');
+            runUploadQueue();
+        }
+
+        function handleFileUpload(e) {
+            // IMPORTANTE: copiar antes de limpar o input (FileList esvazia ao resetar)
+            const files = Array.from(e.target.files || []);
+            e.target.value = '';
+            if (files.length === 0) return;
+            uploadFiles(files);
+        }
+
+        function handleFolderUpload(e) {
+            const files = Array.from(e.target.files || []);
+            e.target.value = '';
+            if (files.length === 0) return;
+            uploadFilesWithRelativePaths(files);
+        }
+
+        async function uploadFilesWithRelativePaths(fileList) {
+            const files = Array.from(fileList);
+            if (files.length === 0) return;
+
+            const basePath = ensureTrailingSlash(currentPath);
+            const dirsToCreate = new Set();
+            const items = [];
+
+            for (const file of files) {
+                const relativePath = file.webkitRelativePath || file.name;
+                const parts = relativePath.split('/').filter(Boolean);
+                const fileName = parts.pop();
+                if (!fileName) continue;
+
+                for (let j = 1; j <= parts.length; j++) {
+                    dirsToCreate.add(parts.slice(0, j).join('/'));
+                }
+
+                const subDir = parts.join('/');
+                items.push({
+                    file,
+                    destPath: joinVirtualPath(basePath, subDir ? subDir + '/' : ''),
+                    label: relativePath
+                });
+            }
+
+            if (items.length === 0) {
+                showToast('Nenhum arquivo encontrado na pasta', true);
+                return;
+            }
+
+            showUploadPanel();
+            document.getElementById('upload-panel-title').textContent = 'Preparando pastas...';
+            document.getElementById('upload-file-name').textContent = `Criando estrutura (${dirsToCreate.size} pastas)...`;
+
+            await ensureDirs(basePath, dirsToCreate);
+            enqueueUploads(items, basePath);
+        }
+
+        function uploadFiles(fileList) {
+            const files = Array.from(fileList);
+            if (files.length === 0) return;
+            const basePath = ensureTrailingSlash(currentPath);
+            const items = files.map(file => ({
+                file,
+                destPath: basePath,
+                label: file.name
+            }));
+            enqueueUploads(items, basePath);
+        }
+
+        function openModal(title, defaultValue, onConfirm) {
+            document.getElementById('modal-title').innerText = title;
+            const input = document.getElementById('modal-input');
+            input.value = defaultValue;
+            document.getElementById('input-modal').style.display = 'flex';
+            input.focus();
+            input.select();
+
+            document.getElementById('modal-confirm').onclick = async () => {
+                if (!input.value.trim()) return;
+                await onConfirm(input.value.trim());
+                closeModal();
+            };
+        }
+
+        function closeModal() {
+            document.getElementById('input-modal').style.display = 'none';
+        }
+
+        function openNewFolderModal() {
+            openModal('Nova Pasta', 'Nova pasta', async (name) => {
+                await api('/folder', 'POST', { path: currentPath, name });
+                showToast('Pasta criada');
+                loadPath(currentPath);
+            });
+        }
+
+        function openNewFileModal() {
+            openModal('Novo Arquivo', 'novo_arquivo.txt', async (name) => {
+                await api('/create-file', 'POST', { path: currentPath, name });
+                showToast('Arquivo criado');
+                loadPath(currentPath);
+            });
+        }
+
+        function closeBgContextMenu() {
+            document.getElementById('bg-context-menu').style.display = 'none';
+        }
+
+        function openRenameModal() {
+            openModal('Renomear', window.currentContextMenuName, async (newName) => {
+                if (newName === window.currentContextMenuName) return;
+                await api('/rename', 'POST', { path: currentPath, old_name: window.currentContextMenuName, new_name: newName });
+                showToast('Renomeado com sucesso');
+                loadPath(currentPath);
+            });
+        }
+
+        async function handleDelete() {
+            if (confirm(`Tem certeza que deseja excluir '${window.currentContextMenuName}'?`)) {
+                await api('/file', 'DELETE', { path: window.currentContextMenuPath, type: window.currentContextMenuType });
+                showToast('Excluído com sucesso');
+                loadPath(currentPath);
+            }
+        }
+
+        function showToast(message, isError = false) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            if (isError) toast.style.backgroundColor = 'var(--danger-color)';
+            toast.innerText = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+            }, 10);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- Drag and Drop ---
+        (function setupDragDrop() {
+            const viewFiles = document.getElementById('view-files');
+            const overlay = document.getElementById('drag-overlay');
+            let dragCounter = 0;
+
+            viewFiles.addEventListener('dragenter', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dragCounter++;
+                overlay.classList.add('active');
+            });
+
+            viewFiles.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dragCounter--;
+                if (dragCounter <= 0) {
+                    dragCounter = 0;
+                    overlay.classList.remove('active');
+                }
+            });
+
+            viewFiles.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            viewFiles.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dragCounter = 0;
+                overlay.classList.remove('active');
+
+                // Tenta usar webkitGetAsEntry para suportar pastas
+                const items = e.dataTransfer.items;
+                if (items && items.length > 0) {
+                    const hasDir = Array.from(items).some(item => {
+                        const entry = item.webkitGetAsEntry && item.webkitGetAsEntry();
+                        return entry && entry.isDirectory;
+                    });
+
+                    if (hasDir) {
+                        // Upload recursivo de pastas
+                        handleDropEntries(items);
+                        return;
+                    }
+                }
+
+                // Fallback: só arquivos
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    uploadFiles(e.dataTransfer.files);
+                }
+            });
+        })();
+
+        // --- Background Context Menu (right-click on empty area) ---
+        (function setupBgContextMenu() {
+            const fileList = document.getElementById('file-list');
+
+            fileList.addEventListener('contextmenu', (e) => {
+                // Only show bg context menu if the click is NOT on a file-item
+                if (e.target.closest('.file-item')) return;
+
+                e.preventDefault();
+                // Hide file context menu if visible
+                document.getElementById('context-menu').style.display = 'none';
+
+                const bgMenu = document.getElementById('bg-context-menu');
+                bgMenu.style.display = 'block';
+                bgMenu.style.left = `${e.pageX}px`;
+                bgMenu.style.top = `${e.pageY}px`;
+            });
+        })();
+
+        // --- Recursive folder drop handler ---
+        async function handleDropEntries(items) {
+            const filesToUpload = [];
+
+            function readAllEntries(reader) {
+                return new Promise((resolve, reject) => {
+                    const all = [];
+                    const readBatch = () => {
+                        reader.readEntries((entries) => {
+                            if (!entries.length) {
+                                resolve(all);
+                                return;
+                            }
+                            all.push(...entries);
+                            readBatch();
+                        }, reject);
+                    };
+                    readBatch();
+                });
+            }
+
+            async function readEntry(entry, pathPrefix) {
+                if (entry.isFile) {
+                    const file = await new Promise((resolve, reject) => entry.file(resolve, reject));
+                    file._relativePath = pathPrefix + file.name;
+                    file._parentDir = pathPrefix;
+                    filesToUpload.push(file);
+                    return;
+                }
+                if (entry.isDirectory) {
+                    const reader = entry.createReader();
+                    const entries = await readAllEntries(reader);
+                    for (const child of entries) {
+                        await readEntry(child, pathPrefix + entry.name + '/');
+                    }
+                }
+            }
+
+            const promises = [];
+            for (let i = 0; i < items.length; i++) {
+                const entry = items[i].webkitGetAsEntry && items[i].webkitGetAsEntry();
+                if (entry) promises.push(readEntry(entry, ''));
+            }
+            await Promise.all(promises);
+
+            if (filesToUpload.length === 0) {
+                showToast('Nenhum arquivo encontrado na pasta', true);
+                return;
+            }
+
+            const basePath = ensureTrailingSlash(currentPath);
+            const dirsToCreate = new Set();
+            const itemsOut = [];
+
+            for (const file of filesToUpload) {
+                if (file._parentDir) {
+                    const parts = file._parentDir.split('/').filter(Boolean);
+                    for (let j = 1; j <= parts.length; j++) {
+                        dirsToCreate.add(parts.slice(0, j).join('/'));
+                    }
+                }
+                itemsOut.push({
+                    file,
+                    destPath: joinVirtualPath(basePath, file._parentDir || ''),
+                    label: file._relativePath || file.name
+                });
+            }
+
+            showUploadPanel();
+            document.getElementById('upload-panel-title').textContent = 'Preparando pastas...';
+            document.getElementById('upload-file-name').textContent =
+                `Criando estrutura (${dirsToCreate.size} pastas)...`;
+
+            await ensureDirs(basePath, dirsToCreate);
+            enqueueUploads(itemsOut, basePath);
+        }
+    </script>
+</body>
+</html>

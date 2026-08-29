@@ -1,0 +1,12 @@
+# Binários do Sistema
+nas
+nas.exe
+nas_windows.exe
+
+# Arquivos de Configuração e Banco de Dados Local
+config.json
+.nas_database.json
+
+# Diretório de armazenamento / outros arquivos irrelevantes
+.vscode/
+.DS_Store
